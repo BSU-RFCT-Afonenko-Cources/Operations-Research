@@ -1,0 +1,501 @@
+---
+title: "ДОП"
+engine: knitr
+format: html
+---
+
+```{r setup}
+library(pracma)
+library(plotly)
+library(readr)
+library(dplyr)
+library(nloptr)
+
+# Загрузка данных наблюдений
+shadow_data <- read_csv('lab/extra/nonlinear/shadow.csv')
+
+# Константы задачи
+constants <- list(
+  R = 8.31,           # Дж/(К·моль)
+  M = 28.97e-3,       # кг/моль (переводим в кг)
+  g = 9.8,            # м/с^2
+  gamma = 7/5,
+  P_a = 101.3e3,      # Па
+  Lambda = 0.6,
+  tau = 2e-3,
+  rho_0 = 1.20,       # кг/м^3
+  Gamma = 1,
+  A_r = 1.2,
+  A_n = 1.6,
+  V_1 = 7.9e3,        # м/с
+  h_0 = 100e3,        # м
+  epsilon = 0.9,
+  sigma = 5.67e-8,    # Вт/(м^2·К^4)
+  psi = 1,
+  amu = 1.66e-27,     # кг
+  k_B = 1.38e-23,     # Дж/К
+  T_0 = 288.15,       # К (15°C)
+  
+  # Характеристики алюминия
+  T_B = 2470 + 273.15, # К
+  c = 930,             # Дж/(кг·К)
+  L_f = 390e3,         # Дж/кг
+  L_b = 10.53e6,       # Дж/кг
+  mu = 27 * 1.66e-27,  # кг
+  
+  # Характеристики спутника 3U
+  length = 0.30,       # м
+  width = 0.10,        # м
+  height = 0.10,       # м
+  density_al = 2700    # кг/м^3
+)
+
+# Расчет параметров спутника
+satellite <- list(
+  volume = constants$length * constants$width * constants$height,
+  mass_0 = constants$length * constants$width * constants$height * constants$density_al,
+  surface_area = 2 * (constants$length * constants$width + 
+                     constants$length * constants$height + 
+                     constants$width * constants$height),
+  cross_section = constants$length * constants$width
+)
+
+# Теплота абляции
+constants$L = constants$L_f + constants$L_b
+```
+
+
+```{r}
+# Функции атмосферы
+atmosphere_temperature <- function(h) {
+  if (h < 0) h <- 0
+  
+  T_0 <- constants$T_0
+  gamma <- constants$gamma
+  M <- constants$M
+  g <- constants$g
+  R <- constants$R
+  
+  T_a <- T_0 - (gamma - 1) / gamma * M * g * h / R
+  
+  # Ограничение минимальной температуры
+  if (T_a < 50) T_a <- 50  # Минимум 50 К
+  
+  return(T_a)
+}
+
+atmosphere_density <- function(h) {
+  # Ограничение высоты
+  if (h < 0) h <- 0
+  if (h > 200000) h <- 200000
+  
+  T_a <- atmosphere_temperature(h)
+  
+  # Проверка на корректность температуры
+  if (is.na(T_a) || T_a <= 0) {
+    return(0)
+  }
+  
+  rho_a <- constants$rho_0 * (T_a / constants$T_0)^(1/0.26)
+  
+  # Ограничение минимальной плотности
+  if (rho_a < 1e-12) rho_a <- 1e-12
+  
+  return(rho_a)
+}
+```
+
+```{r}
+# Матрица поворота
+rotation_matrix <- function(alpha, beta, gamma) {
+  matrix(c(
+    cos(beta) * cos(gamma), 
+    sin(alpha) * sin(beta) * cos(gamma) - cos(alpha) * sin(gamma),
+    cos(alpha) * sin(beta) * cos(gamma) + sin(alpha) * sin(gamma),
+    cos(beta) * sin(gamma),
+    sin(alpha) * sin(beta) * sin(gamma) + cos(alpha) * cos(gamma),
+    cos(alpha) * sin(beta) * sin(gamma) - sin(alpha) * cos(gamma),
+    -sin(beta),
+    sin(alpha) * cos(beta),
+    cos(alpha) * cos(beta)
+  ), nrow = 3, byrow = TRUE)
+}
+
+# Вычисление площади проекции для заданных углов поворота
+projection_area <- function(alpha, beta, gamma) {
+  vertices <- matrix(c(
+    0, 0, 0,
+    constants$length, 0, 0,
+    constants$length, constants$width, 0,
+    0, constants$width, 0,
+    0, 0, constants$height,
+    constants$length, 0, constants$height,
+    constants$length, constants$width, constants$height,
+    0, constants$width, constants$height
+  ), nrow = 8, byrow = TRUE)
+  
+  # Поворот и проекция
+  rot_mat <- rotation_matrix(alpha, beta, gamma)
+  projected <- t(rot_mat[1:2, ] %*% t(vertices))
+
+  hull_indices <- chull(projected)
+  area <- abs(polyarea(projected[hull_indices, 1], projected[hull_indices, 2]))
+  
+  return(area)
+}
+
+effective_area_rotating <- function(omega_alpha, omega_beta, omega_gamma) {
+  max_omega <- max(omega_alpha, omega_beta, omega_gamma)
+  
+  if (max_omega > 1) {
+    return(satellite$surface_area / 4)
+  } else {
+    n_samples <- 20
+    time_samples <- seq(0, 2*pi, length.out = n_samples)
+    areas <- sapply(time_samples, function(t) {
+      alpha <- omega_alpha * t
+      beta <- omega_beta * t
+      gamma <- omega_gamma * t
+      projection_area(alpha, beta, gamma)
+    })
+    return(mean(areas))
+  }
+}
+```
+
+```{r}
+
+satellite_ode <- function(t, y, omega_params) {
+  h <- y[1]
+  v <- y[2]
+  m <- y[3]
+  T <- y[4]
+  
+  # Спутник почти полностью сгорел
+  if (!is.na(m) && m < satellite$mass_0 * 0.01) {
+    return(c(0, 0, 0, 0))
+  }
+  
+  T_a <- atmosphere_temperature(h)
+  rho_a <- atmosphere_density(h)
+
+  omega_alpha <- omega_params[1]
+  omega_beta <- omega_params[2]
+  omega_gamma <- omega_params[3]
+  
+  max_omega <- max(omega_alpha, omega_beta, omega_gamma)
+  if (max_omega > 1) {
+    S_e <- satellite$surface_area / 4
+  } else {
+    S_e <- satellite$cross_section
+  }
+  
+  # Скорость абляции
+  dmdt <- 0
+  if (!is.na(T) && !is.na(T_a) && T > T_a && T > 0) {
+    exp_term <- exp(-constants$L * constants$mu / (constants$k_B * T))
+    if (!is.na(exp_term) && is.finite(exp_term)) {
+      dmdt <- S_e * constants$psi * 
+        constants$P_a * exp(constants$L * constants$mu / (constants$k_B * constants$T_B)) * 
+        exp_term / sqrt(2 * pi * constants$k_B * T / constants$mu)
+    }
+  }
+  
+  dhdt <- -v 
+  
+  dvdt <- constants$Gamma * rho_a * v^2 * S_e / m
+  
+  energy_in <- constants$Lambda * rho_a * v^3 * S_e / 2
+  energy_out_radiation <- 4 * constants$sigma * constants$epsilon * 
+                         (T^4 - T_a^4) * satellite$surface_area
+  energy_out_ablation <- constants$L * dmdt
+  
+  dTdt <- (energy_in - energy_out_radiation - energy_out_ablation) / (constants$c * m)
+  
+  return(c(dhdt, dvdt, -dmdt, dTdt))
+}
+
+smart_integration <- function(satellite_ode, t0, tfinal_max, y0, omega_params, dt = 0.1) {
+  current_time <- t0
+  current_y <- y0
+  
+  times <- c(current_time)
+  solutions <- matrix(current_y, nrow = 1)
+  
+  while (current_time < tfinal_max) {
+    mass_ratio <- current_y[3] / satellite$mass_0
+    height <- current_y[1]
+    
+    if (mass_ratio < 0.01 || height < 1000) {
+      if (height < 1000) {
+        cat(sprintf("  - Высота достигла %.0f м\n", height))
+      }
+      break
+    }
+    
+    next_time <- min(current_time + dt, tfinal_max)
+    
+    result <- tryCatch({
+      ode45(satellite_ode, current_time, next_time, current_y, omega_params = omega_params, 
+            atol = 1e-8, hmax = 0.05)
+    }, error = function(e) {
+      return(NULL)
+    })
+    
+
+    current_time <- result$t[length(result$t)]
+    current_y <- result$y[nrow(result$y), ]
+
+    times <- c(times, result$t[-1])
+    solutions <- rbind(solutions, result$y[-1, ])
+  }
+  
+  return(list(t = times, y = solutions))
+}
+
+intensity_function <- function(t, y, omega_params) {
+  v <- y[2]
+  m <- y[3]
+  T <- y[4]
+  h <- y[1]
+  
+  
+  # Скорость потери массы
+  T_a <- atmosphere_temperature(h)
+  rho_a <- atmosphere_density(h)
+  
+  
+  omega_alpha <- omega_params[1]
+  omega_beta <- omega_params[2]
+  omega_gamma <- omega_params[3]
+  
+  max_omega <- max(omega_alpha, omega_beta, omega_gamma)
+  if (max_omega > 1) {
+    S_e <- satellite$surface_area / 4
+  } else {
+    S_e <- satellite$cross_section
+  }
+  
+  dmdt <- 0
+  if (!is.na(T) && !is.na(T_a) && T > T_a && T > 0) {
+    exp_term <- exp(-constants$L * constants$mu / (constants$k_B * T))
+    if (!is.na(exp_term) && is.finite(exp_term)) {
+      dmdt <- S_e * constants$psi * 
+        constants$P_a * exp(constants$L * constants$mu / (constants$k_B * constants$T_B)) * 
+        exp_term / sqrt(2 * pi * constants$k_B * T / constants$mu)
+    }
+  }
+  
+  if (is.na(dmdt) || !is.finite(dmdt) || dmdt < 0) {
+    dmdt <- 0
+  }
+  
+  # Интенсивность излучения
+  I <- constants$tau * dmdt * v^2 / 2
+  
+  return(I)
+}
+
+```
+
+```{r}
+objective_function_3d <- function(params) {
+  omega_alpha <- params[1]
+  omega_beta <- params[2]
+  omega_gamma <- params[3]
+  
+  # В какой-то момент получаюся некоректные данные
+  if (any(is.na(params)) || any(params <= 0) || any(params > 20)) {
+    return(1e6)
+  }
+  
+  y0 <- c(constants$h_0, constants$V_1, satellite$mass_0, constants$T_0)
+  
+  t0 <- 0
+  tfinal_max <- 10
+  
+  result <- tryCatch({
+    smart_integration(satellite_ode, t0, tfinal_max, y0, params)
+  }, error = function(e) {
+    return(NULL)
+  })
+
+  t_span <- result$t
+  
+  valid_indices <- which(t_span <= 5)
+  if (length(valid_indices) < 5) {
+    return(1e6)
+  }
+  
+  t_span_limited <- t_span[valid_indices]
+  y_limited <- result$y[valid_indices, ]
+  
+  # Вычисление интенсивности
+  intensities <- numeric(length(t_span_limited))
+  for (i in 1:length(t_span_limited)) {
+    intensities[i] <- intensity_function(t_span_limited[i], y_limited[i, ], params)
+  }
+  
+  # Нормализация и сравнение с экспериментальными данными
+  baseline_intensity <- 900
+  shadow_intensity <- baseline_intensity - intensities * 1e3
+  
+  # Интерполяция экспериментальных данных
+  exp_intensity <- approx(shadow_data$Time, shadow_data$Intensity, 
+                         xout = t_span_limited, rule = 2)$y
+  
+  # Среднеквадратичная ошибка
+  error <- sqrt(mean((shadow_intensity - exp_intensity)^2, na.rm = TRUE))
+  
+  return(error)
+}
+```
+
+
+```{r}
+initial_params <- c(1.5, 1.5, 1.5)
+
+result <- nloptr(
+  x0 = initial_params,
+  eval_f = objective_function_3d,
+  lb = c(-10, -10, -10),
+  ub = c(10, 10, 10),
+  opts = list(
+    algorithm = "NLOPT_LN_SBPLX",
+    maxeval = 100,
+    xtol_rel = 1e-6
+  )
+)
+
+best_params <- result$solution
+```
+
+Угловые скорости: `r paste(round(best_params, 4), collapse = ", ")`
+
+Минимальная ошибка: `r round(result$objective, 4)`
+
+```{r}
+y0 <- c(constants$h_0, constants$V_1, satellite$mass_0, constants$T_0)
+t0 <- 0
+tfinal_max <- 10
+
+simulation <- smart_integration(satellite_ode, t0, tfinal_max, y0, best_params)
+
+intensities <- numeric(length(simulation$t))
+for (i in 1:length(simulation$t)) {
+  intensities[i] <- intensity_function(simulation$t[i], simulation$y[i, ], best_params)
+}
+
+plot_ly() %>%
+  add_trace(x = simulation$t, y = simulation$y[,3], 
+            type = "scatter", mode = "lines",
+            name = "Масса", line = list(color = "blue")) %>%
+  layout(title = "Изменение массы спутника",
+         xaxis = list(title = "Время (с)"),
+         yaxis = list(title = "Масса (кг)"))
+
+plot_ly() %>%
+  add_trace(x = simulation$t, y = simulation$y[,2], 
+            type = "scatter", mode = "lines",
+            name = "Скорость", line = list(color = "red")) %>%
+  layout(title = "Изменение скорости спутника",
+         xaxis = list(title = "Время (с)"),
+         yaxis = list(title = "Скорость (м/с)"))
+
+plot_ly() %>%
+  add_trace(x = simulation$t, y = simulation$y[,4], 
+            type = "scatter", mode = "lines",
+            name = "Температура", line = list(color = "orange")) %>%
+  layout(title = "Изменение температуры спутника",
+         xaxis = list(title = "Время (с)"),
+         yaxis = list(title = "Температура (К)"))
+
+plot_ly() %>%
+  add_trace(x = simulation$t, y = intensities, 
+            type = "scatter", mode = "lines",
+            name = "Интенсивность", line = list(color = "green")) %>%
+  layout(title = "Интенсивность излучения спутника",
+         xaxis = list(title = "Время (с)"),
+         yaxis = list(title = "Интенсивность (Вт)"))
+
+valid_indices <- which(simulation$t <= 5)
+t_limited <- simulation$t[valid_indices]
+intensities_limited <- intensities[valid_indices]
+
+baseline_intensity <-0
+scaling_factor <- -0.001
+shadow_intensity <- baseline_intensity - intensities_limited * scaling_factor
+
+plot_ly() %>%
+  add_trace(x = t_limited, y = shadow_intensity, 
+            type = "scatter", mode = "lines",
+            name = "Модель", line = list(color = "blue")) %>%
+  add_trace(x = shadow_data$Time, y = shadow_data$Intensity, 
+            type = "scatter", mode = "lines",
+            name = "Эксперимент", line = list(color = "red")) %>%
+  layout(title = "Сравнение теоретической и экспериментальной интенсивности",
+         xaxis = list(title = "Время (с)"),
+         yaxis = list(title = "Яркость солнца (усл. ед.)"))
+
+max_intensity <- max(intensities)
+stellar_magnitude <- 6.8 - 1.086 * log(max_intensity)
+
+print(paste("Максимальная интенсивность излучения:", round(max_intensity, 4), "Вт"))
+print(paste("Звездная величина:", round(stellar_magnitude, 2)))
+
+stars <- data.frame(
+  name = c("Солнце", "Сириус", "Вега", "Антарес", "Альфард", "Альбирео", "Алдульфин", "Звезда Бесселя", "Сихэ"),
+  magnitude = c(-26.7, -1.46, 0.03, 1.0, 2.0, 3.08, 4.03, 5.21, 6.04)
+)
+
+closest_star_idx <- which.min(abs(stars$magnitude - stellar_magnitude))
+closest_star <- stars$name[closest_star_idx]
+closest_magnitude <- stars$magnitude[closest_star_idx]
+
+print(paste("Ближайшая по яркости звезда:", closest_star, 
+            "со звездной величиной", closest_magnitude))
+```
+
+```{r}
+
+final_height <- tail(simulation$y[,1], 1)
+final_velocity <- tail(simulation$y[,2], 1)
+final_mass <- tail(simulation$y[,3], 1)
+final_temperature <- tail(simulation$y[,4], 1)
+mass_loss_percentage <- (1 - final_mass / satellite$mass_0) * 100
+
+results_table <- data.frame(
+  Параметр = c(
+    "Угловая скорость (ω₁, ω₂, ω₃)", 
+    "Минимальная ошибка модели",
+    "Максимальная интенсивность излучения",
+    "Звездная величина",
+    "Ближайшая звезда по яркости",
+    "Конечная высота",
+    "Конечная скорость",
+    "Начальная масса",
+    "Конечная масса",
+    "Потеря массы",
+    "Конечная температура"
+  ),
+  Значение = c(
+    paste(round(best_params, 4), collapse = ", "),
+    round(result$objective, 4),
+    paste(round(max_intensity, 4), "Вт"),
+    round(stellar_magnitude, 2),
+    paste(closest_star, "(", round(closest_magnitude, 2), ")"),
+    paste(round(final_height, 2), "м"),
+    paste(round(final_velocity, 2), "м/с"),
+    paste(round(satellite$mass_0, 2), "кг"),
+    paste(round(final_mass, 2), "кг"),
+    paste(round(mass_loss_percentage, 2), "%"),
+    paste(round(final_temperature, 2), "K")
+  )
+)
+
+knitr::kable(
+  results_table,
+  caption = "Результаты моделирования последних минут жизни спутника BSUSAT-1",
+  align = c("l", "r")
+)
+```

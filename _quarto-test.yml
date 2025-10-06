@@ -5,4 +5,4 @@ project:
 book:
   chapters:
     - index.qmd
-    - game-theory/overview.qmd
+    - main.qmd
