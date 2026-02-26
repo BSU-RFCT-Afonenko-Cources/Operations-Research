@@ -11,7 +11,7 @@ NumSpacesForTab: 2
 Encoding: UTF-8
 
 RnwWeave: knitr
-LaTeX: XeLaTeX
+LaTeX: LuaLaTeX
 
 AutoAppendNewline: Yes
 StripTrailingWhitespace: Yes
@@ -19,7 +19,5 @@ StripTrailingWhitespace: Yes
 UseNativePipeOperator: Yes
 
 PythonType: virtualenv
-PythonVersion: 3.13.2
-PythonPath: venv/bin/python
-
-SpellingDictionary: ru_RU
+PythonVersion: 3.14.3
+PythonPath: .venv/bin/python

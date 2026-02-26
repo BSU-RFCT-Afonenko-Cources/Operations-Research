@@ -21,6 +21,8 @@
 #| fig-height: 7
 #| fig-align: center
 #| echo: false
+#| warning: false
+#| message: false
 
 g <- igraph::read_graph('room505.graphml', format = 'GraphML')
 igraph::V(g)$color <- purrr::map_chr(igraph::V(g)$type, \(t) switch(

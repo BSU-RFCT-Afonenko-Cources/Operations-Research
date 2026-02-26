@@ -5,4 +5,4 @@ project:
 book:
   chapters:
     - index.qmd
-    - main.qmd
+    - linear/algebra.qmd

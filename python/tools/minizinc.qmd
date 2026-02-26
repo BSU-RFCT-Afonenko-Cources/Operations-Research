@@ -1,7 +1,7 @@
 ---
 engine: knitr
+knitr: true
 ---
-
 
 # Язык моделирования MiniZinc
 
@@ -30,7 +30,6 @@ inst["c"] = 0
 result = inst.solve(all_solutions=True)
 for i in range(len(result)):
     print("x = {}".format(result[i, "x"]))
-
 ```
 
 ## Интерфейс `zython`
@@ -49,5 +48,4 @@ class MyModel(Model):
 model = MyModel(1, 4, 0)
 result = model.solve_satisfy(all_solutions=True)
 print(result)
-
 ```

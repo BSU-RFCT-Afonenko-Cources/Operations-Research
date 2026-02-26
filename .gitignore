@@ -5,7 +5,7 @@
 
 .quarto/
 _site/
-_*book/
+_*book*/
 _test/
 _practice/
 _freeze/
@@ -26,3 +26,5 @@ _freeze/
 /.quarto/
 
 /_*.local
+
+**/*.quarto_ipynb

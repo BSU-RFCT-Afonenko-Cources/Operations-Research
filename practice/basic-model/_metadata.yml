@@ -1,8 +1,8 @@
 table-lamp:
-    select: false
+    select: true
 
 avia-tickets:
-    select: false
+    select: true
     params:
       one-way-cost:
         type: integer
@@ -20,7 +20,5 @@ avia-tickets:
         max: 1000
         step: 50
 
-det:
-    select: false
-equations:
-    select: false
+sawmill:
+    select: true

@@ -780,6 +780,8 @@ plot(g, vertex.label = NA, edge.label = NA, vertex.size=5, edge.arrow.size = 0.6
 ```{r}
 #| echo: false
 #| fig-height: 8
+#| warning: false
+#| message: false
 
 igraph::V(g)$color <- NA
 igraph::V(g)[fun %in% SQL_FUN & igraph::degree(g, mode='out') >= 2]$color <- 'red'

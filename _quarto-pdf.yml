@@ -6,6 +6,7 @@ project:
 
 format:
   pdf:
+    code-block-bg: "#FCFCFC"
     latex-auto-install: false
     use-rsvg-convert: true
     documentclass: scrbook

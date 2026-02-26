@@ -1,3 +1,8 @@
+---
+engine: knitr
+knitr: true
+---
+
 ```{r}
 #| label: import
 #| echo: false
@@ -11,6 +16,7 @@ loadNamespace('webshot2') |> invisible()
 loadNamespace('htmlwidgets') |> invisible()
 loadNamespace('ggplot2') |> invisible()
 loadNamespace('tidyverse') |> invisible()
+loadNamespace('DiagrammeR') |> invisible()
 ```
 
 # Язык разметки Markdown {#sec-markdown}
@@ -120,7 +126,7 @@ fig.savefig("test.png")
 plt.show()
 ```
 
-```{{julia}}
+```{julia}
 #| warning: false
 #| message: false
 #| error: false
@@ -151,7 +157,7 @@ airquality$TempC <- (5 / 9) * (airquality$Temp - 32)
 Параметр `echo: false` отключает печать кода (отображается только вывод).
 
 ```` markdown
-``` r
+```{r}
 library(tidyverse)
 library(palmerpenguins)
 penguins |>

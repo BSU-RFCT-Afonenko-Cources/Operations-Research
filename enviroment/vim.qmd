@@ -1,0 +1,9 @@
+# Среда разработки NeoVIM
+
+```{r}
+#| include: false
+#| warning: false
+#| message: false
+
+loadNamespace(languageserver) |> invisible()
+```

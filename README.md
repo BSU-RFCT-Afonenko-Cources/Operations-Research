@@ -1,5 +1,11 @@
 # Установка
 
+Инициализация репозитория
+
+``` bash
+git submodule update --init --recursive
+```
+
 ## Программы
 
 1.  [Julia](https://julialang.org/downloads/)
@@ -12,6 +18,8 @@
 8.  Сhromium совместимый браузер
 9.  [MiniZinc](https://www.minizinc.org/downloads/)
 10. [GraphViz](https://graphviz.org/download/)
+11. [Mermaid](https://github.com/mermaid-js/mermaid-cli)
+
 
 ### Windows
 
@@ -54,9 +62,19 @@ ASYMPTOTE_PDFVIEWER="C:\Users\<user>\AppData\Local\SumatraPDF\SumatraPDF.exe"
 
 ### Linux
 
+Может возникнуть необходимость отключить KWallet для отсутствия блокировки при запуске headless chromium
+
+#### Arch
+
+Добавить в файл `~/.config/chromium-flags.conf`
+
+```
+--password-store=basic
+```
+
 ## Пакеты Julia, Python, R
 
-### R и Pyhton
+### R
 
 При первом запуске в корне проекта вызвать R интерактивно и согласиться с установкой пакетов.
 
@@ -68,6 +86,15 @@ R
 
 ``` bash
 Rscript -e '1'
+```
+
+### Python
+
+Предварительно установить пакетный менеджер `poetry`
+
+``` bash
+poetry config --local virtualenvs.in-project true
+poetry install
 ```
 
 ### Julia

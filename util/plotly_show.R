@@ -20,9 +20,8 @@ plotly_show_non_html <- function(fig)
       break
   }
 
-  fig |>
-  plotly::save_image(fig_path) |>
-  knitr::include_graphics()
+  plotly::save_image(fig, fig_path)
+  knitr::include_graphics(fig_path)
 }
 
 pshow_safe <- function(fig)
