@@ -1,8 +1,8 @@
 solution:
-  select: false
+  select: true
 
 special-case:
-  select: false
+  select: true
 
   type1:
     select: true
@@ -10,4 +10,4 @@ special-case:
     select: false
 
 sensetivity:
-  select: false
+  select: true

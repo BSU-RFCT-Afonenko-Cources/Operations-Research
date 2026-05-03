@@ -2,12 +2,12 @@ project:
   type: default
   output-dir: _practice
   render:
-    - practice/basic-model/main.qmd
-    - practice/linear/simplex/main.qmd
+#    - practice/basic-model/main.qmd
+#    - practice/linear/simplex/main.qmd
     - practice/linear/graphical/main.qmd
-    - practice/linear/algebra/main.qmd
-    - practice/linear/model/main.qmd
-    - practice/game-theory/main.qmd
+#    - practice/linear/algebra/main.qmd
+#    - practice/linear/model/main.qmd
+#    - practice/game-theory/main.qmd
 
 filters:
   - scripts/header/practice.lua

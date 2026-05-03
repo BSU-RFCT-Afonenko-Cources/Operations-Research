@@ -1,12 +1,12 @@
 convert-to-linear:
-  select: false
+  select: true
 
 standard-form:
-    select: false
+    select: true
 
 build-model:
-  select: false
+  select: true
 
 dual-problem:
-  select: false
+  select: true
 

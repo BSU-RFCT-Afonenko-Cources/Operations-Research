@@ -10,6 +10,6 @@ format:
     mainfont: Times New Roman
     sansfont: Times New Roman
     monofont: Noto Sans Mono Black
-    keep-tex: true
+#    keep-tex: true
 #    geometry:
 #     - showframe

@@ -26,7 +26,7 @@
 :::: {#exr-practice-linear-model-convert-to-linear}
 ## Линейная модель
 
-Минимизировать $z=\max\{|x_1-x_2+3x_3|,|-x_1+3x_2-x_3|\}$, при ограничениях $x_1,x_2,x_3 \geq 0$. Подсказка: представьте, что $z$ это число, которое не меньше, чем аргументы $\max$ и примените свойство модуля $|a|\leq b$ эквивалентна записи $a\leq b$ и $a \geq -b$. Привести к линейной модели.
+Минимизировать $z=\max\{|x_1-x_2+3x_3|,|-x_1+3x_2-x_3|\}$, при ограничениях $x_1,x_2,x_3 \geq 0$. Подсказка: представьте, что $z$ это число, которое не меньше, чем аргументы $\max$ и примените свойство модуля $|a| \leq b$ эквивалентна записи $a\leq b$ и $a \geq -b$. Привести к линейной модели. <!--Таха 3.5 с. 139-->
 
 ::: {.callout-note appearance="minimal" title="Оценка"}
 0.25
@@ -38,7 +38,20 @@
 
 :::: {.content-hidden when-profile="student" when-profile="practice"}
 ::: {#sol-practice-linear-model-convert-to-linear}
-{{< lipsum 1 >}}
+
+$$
+\begin{aligned}
+&\mathrm{F}=z \to \max \\
+&\begin{cases}
+x_1 - x_2 + 3x_3 \leq z, \\
+x_1 - x_2 + 3x_3 \geq -z, \\
+-x_1 + 3x_2 - x_3 \leq z, \\
+-x_1 + 3x_2 - x_3 \geq -z, \\
+x_1,x_2,x_3,z \geq 0
+\end{cases}
+\end{aligned}
+$$
+
 :::
 ::::
 
@@ -71,7 +84,6 @@ $$
 
 :::: {.content-hidden when-profile="student" when-profile="practice"}
 ::: {#sol-practice-linear-model-standard-form}
-
 Приведём целевую функцию к задаче максимизации следующим образом $\min F(x) = - \max \bigl(-F(x) \bigr)$
 
 $$
@@ -86,7 +98,8 @@ $$
 &-3x_2-2x_3-x_4-o_2=8
 \end{aligned}
 $$
-А ограничение 2 введя избыточную переменную $i_1$ 
+
+А ограничение 2 введя избыточную переменную $i_1$
 
 $$
 x_1+6x_2+11x_3-x_4-i_1=25
@@ -135,7 +148,94 @@ $$
 
 :::: {.content-hidden when-profile="student" when-profile="practice"}
 ::: {#sol-practice-linear-model-build-model}
-{{< lipsum 2 >}}
+
+|       |             |
+|-------|-------------|
+| $t_1$ | учёба       |
+| $t_2$ | спорт       |
+| $t_3$ | тусовки     |
+| $t_4$ | мероприятия |
+
+Обозначим переменные — сколько часов в неделю активист тратит на каждую деятельность:
+
+### Ограничения
+
+Всего свободного времени — 70 часов, значит:
+
+$$
+t_1+t_2+t_3+t_4=70
+$$
+
+На учёбу нужно тратить не меньше 6 часов в день 6 дней в неделю:
+
+$$
+t_1 \geq 36
+$$
+
+Тусовок организуется в два раза меньше, чем мероприятий:
+
+$$
+t_4 = \frac{1}{2}t_3
+$$
+
+Естественно время положительное
+
+$$
+t_1,t_2,t_3,t_4 \geq 0
+$$
+
+### Целевая функция
+
+Примем удовольствие от часа учёбы за единицу:
+
+$$
+a_1=1
+$$
+
+Мероприятия интереснее учёбы в 2 раза, значит:
+
+$$
+a_3=2
+$$
+
+Тусовки в два раза круче мероприятий, значит:
+
+$$
+a_4=4
+$$
+
+Тусовки в 1.5 раза лучше, чем спорт, значит:
+
+$$
+a_4=1.5 a_2 
+$$
+
+Отсюда:
+
+$$
+a_2=\frac{4}{1.5}=\frac{8}{3}
+$$
+
+Тогда целевая функция максимизации удовольствия:
+
+$$
+F = t_1+\frac{8}{3}t_2 + 2 t_3 + 4 t_4 \to \max
+$$
+
+Итоговая модель линейного программирования:
+
+$$
+\begin{aligned}
+&F = t_1+\frac{8}{3}t_2 + 2t_3 + 4t_4 \to \max \\
+&\begin{cases}
+t_1+t_2+t_3+t_4 = 70 \\
+t_1 \ge 36 \\
+t_4 = \frac{1}{2}t_3 \\
+t_1,t_2,t_3,t_4 \geq 0
+\end{cases}
+\end{aligned}
+$$
+
 :::
 ::::
 
@@ -146,6 +246,7 @@ $$
 Сформулировать двойственную задачу <!--// Таха 4.4 189-->
 
 ::: {layout-ncol="2"}
+
 $$
 \begin{aligned}
 &\mathrm{F}=-5x_1+2x_2 \rightarrow \max \\
@@ -166,6 +267,7 @@ x_1,x_2 \geq 0
 \end{cases}
 \end{aligned}
 $$
+
 :::
 
 ::: {.callout-note appearance="minimal" title="Оценка"}
@@ -178,7 +280,6 @@ $$
 
 :::: {.content-hidden when-profile="student" when-profile="practice"}
 ::: {#sol-practice-linear-model-dual-problem}
-
 Основываясь на правилах, определённых в @sec-linear-dual-problem получаем:
 
 Первый случай подходит под следующую формулировку
@@ -194,7 +295,7 @@ $$
 &\min \mathrm{\mathbf{b}}^T\mathrm{\mathbf{y}} \\
 &\mathrm{\mathbf{A}}^T \mathrm{\mathbf{y}} \geq \mathrm{\mathbf{c}} \\
 &\mathrm{\mathbf{y}} \geq 0
-\end{aligned} 
+\end{aligned}
 $$
 
 Соответственно двойственная задача
@@ -222,7 +323,7 @@ $$
 &\min \mathrm{\mathbf{b}}^T\mathrm{\mathbf{y}} \\
 &\mathrm{\mathbf{A}}^T \mathrm{\mathbf{y}} \geq \mathrm{\mathbf{c}} \\
 &\mathrm{\mathbf{y}} \in \mathbb{R}
-\end{aligned} 
+\end{aligned}
 $$
 
 Соответственно двойственная задача

@@ -43,6 +43,7 @@
 #| out-width: 5cm
 ashow('grid/solution.asy')
 ```
+
 :::
 
 ::: {.callout-note appearance="minimal" title="Оценка"}
@@ -63,13 +64,13 @@ ashow('grid/solution.asy')
 
 Определить какой особый случай реализован. <!-- 3.5 Особые случаи применения симплекс-метода Таха 113-->
 
-::: {.content-hidden unless-meta="special.type1.select" layout-ncol="2"}
+::: {.content-hidden unless-meta="special-case.type1.select" layout-ncol="2"}
 {{< include _special-case-problem/no-fesiable-solution.qmd >}}
 
 {{< include _special-case-problem/alternative.qmd >}}
 :::
 
-::: {.content-hidden unless-meta="special.type2.select" layout-ncol="2"}
+::: {.content-hidden unless-meta="special-case.type2.select" layout-ncol="2"}
 {{< include _special-case-problem/unbounded.qmd >}}
 
 {{< include _special-case-problem/degeneracy.qmd >}}
@@ -88,6 +89,7 @@ ashow('grid/solution.asy')
 
 ashow('grid/special-case.asy',2)
 ```
+
 :::
 :::::::
 ::::::::
@@ -134,14 +136,16 @@ $$
 :::
 
 ::: {.content-visible when-profile="practice"}
+
 ```{r}
 #| layout-ncol: 2
 #| echo: false
 #| fig-align: center
-#| out-width: 6cm
+#| out-width: 5cm
 
 ashow('grid/sensetivity.asy',2)
 ```
+
 :::
 :::::
 ::::::
