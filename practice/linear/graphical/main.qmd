@@ -34,17 +34,28 @@
 {{< include _solution-problem.qmd >}}
 :::
 
-::: {.content-visible when-profile="practice" layout-ncol="2"}
+:::: {.content-visible when-profile="practice" layout-ncol="2"}
+
+::: {#practice-2-graphical-solution-col1}
+
+[`\vspace{0pt}`{=latex}]{.content-visible when-profile="practice"} <!-- грязный костыль-->
+
 {{< include _solution-problem.qmd >}}
+:::
+
+::: {#practice-2-graphical-solution-col2}
+
+[`\vspace{0pt}`{=latex}]{.content-visible when-profile="practice"} <!-- грязный костыль-->
 
 ```{r}
 #| fig-align: center
 #| echo: false
-#| out-width: 5cm
+
 ashow('grid/solution.asy')
 ```
-
 :::
+
+::::
 
 ::: {.callout-note appearance="minimal" title="Оценка"}
 0.25

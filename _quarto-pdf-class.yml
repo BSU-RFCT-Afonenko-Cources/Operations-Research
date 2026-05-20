@@ -1,4 +1,17 @@
 format:
+  latex:
+    code-block-bg: "#FCFCFC"
+    latex-auto-install: false
+    documentclass: scrartcl
+    fontsize: 11pt
+    papersize: a4
+    colorlinks: true
+    mainfont: Times New Roman
+    sansfont: Times New Roman
+    monofont: Noto Sans Mono Black
+    keep-tex: true
+    geometry:
+     - showframe
   pdf:
     code-block-bg: "#FCFCFC"
     latex-auto-install: false

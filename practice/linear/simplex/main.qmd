@@ -50,7 +50,7 @@ params:
 1
 :::
 
-[`\vspace{1cm}`{=latex}]{.content-visible when-profile="practice"}
+[`\newpage`{=latex}]{.content-visible when-profile="practice"}
 ::::
 :::::
 
@@ -66,37 +66,46 @@ params:
 :::
 ::::
 
-::::::: {.content-hidden when-profile="student" when-profile="practice"}
+::::::: {.content-hidden when-profile="student" when-profile="practice" unless-meta="alghoritm.select"}
 :::::: {#exr-practice-linear-simplex-alghoritm}
 ## Алгоритм
 
 Получив искусственное базисное решение графически, решить задачу симплекс методом.
 
 ::: {.content-hidden when-profile="practice"}
-{{< include _alghorytm-problem.qmd >}}
+{{< include _alghoritm-problem.qmd >}}
 :::
 
-::: {.content-visible when-profile="practice" layout-ncol="2"}
-{{< include _alghorytm-problem.qmd >}}
+:::: {.content-visible when-profile="practice" layout-ncol="2"}
+
+::: {#practice-linear-simplex-alghoritm-col1}
+
+[`\vspace{0pt}`{=latex}]{.content-visible when-profile="practice"} <!-- грязный костыль-->
+
+{{< include _alghoritm-problem.qmd >}}
+:::
+
+::: {#practice-linear-simplex-alghoritm-col2}
+
+[`\vspace{0pt}`{=latex}]{.content-visible when-profile="practice"} <!-- грязный костыль-->
 
 ```{r}
 #| fig-align: center
 #| echo: false
-#| out-width: "6cm"
-ashow('grid/alghorytm.asy')
+
+ashow('grid/alghoritm.asy')
 ```
 :::
+::::
 
 ::: {.callout-note appearance="minimal" title="Оценка"}
 1
 :::
-
-[`\vspace{8cm}`{=latex}]{.content-visible when-profile="practice"}
 ::::::
 :::::::
 
 :::: {.content-hidden when-profile="student" when-profile="practice"}
-::: {#sol-practice-2-simplex-alghorytm}
+::: {#sol-practice-2-simplex-alghoritm}
 {{< lipsum 2 >}}
 :::
 ::::

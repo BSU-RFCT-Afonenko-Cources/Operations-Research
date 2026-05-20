@@ -1,7 +1,5 @@
 [project]
-name = "operations-research"
-version = "0.1.0"
-description = ""
+name = "Operations-research"
 authors = [
     {name = "Afonenko Anatoli",email = "anatolii92111@gmail.com"}
 ]

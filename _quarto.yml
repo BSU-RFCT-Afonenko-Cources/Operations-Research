@@ -15,7 +15,7 @@ book:
   date: today
   date-format: long
 
-  repo-url: "https://github.com/AfonenkoA/Operations-Research"
+  repo-url: "https://github.com/BSU-RFCT-Afonenko-Cources/Operations-Research"
   repo-actions: [issue, source]
   repo-branch: master
 
@@ -23,9 +23,6 @@ lang: ru
 
 bibliography:
   - combinatorial/ref.bib
-  - practice/basic-model/ref.bib
-  - practice/linear/simplex/ref.bib
-  - practice/linear/graphical/ref.bib
   - practice/linear/algebra/ref.bib
   - evolutionary/ref.bib
   - minizinc/ref.bib
